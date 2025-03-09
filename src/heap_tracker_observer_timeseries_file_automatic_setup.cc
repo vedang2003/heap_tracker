@@ -1,5 +1,13 @@
 // Copyright 2018, Arun Saha <arunksaha@gmail.com>
 
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <cassert>
+#include <cstring>
+#include <iostream>
+#include <sstream>
 #include <string>
 
 #include "heap_tracker_dispatcher.h"
@@ -11,9 +19,37 @@
 // in a off-the-shelf ready-to-use way. Essentially, it
 // creates few a static variables and thereby initialize
 // few data structures.
+static std::string
+get_output_filename() {
+  // Define the output directory.
+  std::string output_dir = "timeseries_output";
 
-static char const * const output_filename =
-  "heap_tracker_observer_timeseries_file.output.txt";
+  // Check if the directory exists; if not, create it.
+  struct stat st;
+  if (stat(output_dir.c_str(), &st) != 0) {
+    if (mkdir(output_dir.c_str(), 0700) != 0) {
+      std::cerr << "Error creating directory " << output_dir << ": "
+                << strerror(errno) << std::endl;
+      exit(1);
+    }
+  }
+  else if (!S_ISDIR(st.st_mode)) {
+    std::cerr << output_dir << " exists but is not a directory." << std::endl;
+    exit(1);
+  }
+
+  // Get the current process ID.
+  pid_t pid = getpid();
+
+  // Construct the output filename: output/<pid>.txt
+  std::ostringstream oss;
+  oss << output_dir << "/" << pid << ".txt";
+  return oss.str();
+}
+
+// Store the filename in this const output_filename
+static std::string output_filename_str    = get_output_filename();
+static char const * const output_filename = output_filename_str.c_str();
 
 // Step 1: Create observer.
 static HeapObserverTimeseriesFile local_heap_observer{

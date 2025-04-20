@@ -14,11 +14,6 @@
 #include "heap_tracker_interceptor.h"
 #include "heap_tracker_observer_timeseries_file.h"
 
-// The following portion of the file is like a "driver",
-// it helps an application to use HeapObserverTimeseriesFile
-// in a off-the-shelf ready-to-use way. Essentially, it
-// creates few a static variables and thereby initialize
-// few data structures.
 static std::string
 get_output_filename() {
   // Define the output directory.
@@ -50,6 +45,12 @@ get_output_filename() {
 // Store the filename in this const output_filename
 static std::string output_filename_str    = get_output_filename();
 static char const * const output_filename = output_filename_str.c_str();
+
+// The following portion of the file is like a "driver",
+// it helps an application to use HeapObserverTimeseriesFile
+// in a off-the-shelf ready-to-use way. Essentially, it
+// creates few a static variables and thereby initialize
+// few data structures.
 
 // Step 1: Create observer.
 static HeapObserverTimeseriesFile local_heap_observer{

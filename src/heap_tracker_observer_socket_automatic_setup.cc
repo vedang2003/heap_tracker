@@ -1,32 +1,35 @@
 // heap_observer_socket_automatic_setup.cc
-#include "heap_tracker_observer_socket.h"
 #include "heap_tracker_dispatcher.h"
 #include "heap_tracker_interceptor.h"
+#include "heap_tracker_observer_socket.h"
+#include "heap_tracker_observer_timeseries_file.h"  
 
-#ifdef ENABLE_SOCKET_OUTPUT  // Only include this whole file if enabled
+#ifdef ENABLE_SOCKET_OUTPUT 
 
-static Dispatcher local_dispatcher;  // Dispatcher is same
-
+// Step 1: Create observer first.
 static HeapObserverSocket local_heap_observer{
-  GetHeapObserverTimeseriesFileAutomaticTrackOptions(), "127.0.0.1",
-  9102};  // Or configure IP/port
+  GetHeapObserverTimeseriesFileAutomaticTrackOptions(),  // Now declared via
+                                                         // include
+  "127.0.0.1", 9102};                                    // Or configure IP/port
 
-void
-SetInterceptorDispatcher() {
-  SetInterceptorDispatcher(&local_dispatcher);  // Set in intercepter
-}
+// Step 2: Create dispatcher using the observer created above.
+static Dispatcher local_dispatcher{
+  &local_heap_observer};  
 
-struct HeapObserverSocketDriver {  // Driver Class same as file observer
+struct HeapObserverSocketDriver {
   HeapObserverSocketDriver() {
-    local_dispatcher.SetObserver(&local_heap_observer);
-    local_heap_observer.SetInterceptorDispatcher(&local_dispatcher);
-    SetInterceptorDispatcher();
+
+    // Register the dispatcher with the interceptor mechanism.
+    // This single call should be sufficient, mirroring the file observer setup.
+    ::SetInterceptorDispatcher(
+      &local_dispatcher);  
   }
 };
 
 #ifdef HEAP_TRACKER_INTERCEPT_INTERPOSITION
+// Step 3: Create the driver to setup interceptor dispatcher.
 static const HeapObserverSocketDriver
-  local_driver;  // creating the driver object
+  local_driver;  
 #endif
 
 #endif  // ENABLE_SOCKET_OUTPUT

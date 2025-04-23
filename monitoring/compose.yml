@@ -1,0 +1,47 @@
+services:
+  prometheus:
+    container_name: prometheus
+    restart: unless-stopped
+    build: ./prometheus/
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  
+  node-exporter:
+    image: prom/node-exporter
+    container_name: exporter
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    volumes:
+      - "/proc:/host/proc:ro"
+      - "/sys:/host/sys:ro"
+      - "/:/rootfs:ro"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.processes'
+    
+  grafana:
+    image: grafana/grafana-enterprise
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "9000:3000"
+    networks:
+      - monitoring
+    volumes:
+      - ./grafana-storage:/var/lib/grafana
+
+networks:
+  monitoring:
+    driver: bridge
+    
+volumes:
+  grafana-storage:
+

@@ -273,7 +273,7 @@ For interposition based interception with gcc, replace the last line with
 For building and testing with clang use
 
     ../build_test_clang.sh
-
+    
 # A complete example
 
 Build interposition libraries and tools.
@@ -341,6 +341,101 @@ memory fluctuated a lot.
 Observe that the peak outstanding bytes as reported by
 the summary stats (`1121702` bytes at `2018-03-25 20:28:33.235570`)
 matches with the peak in the plot.
+
+# Heap Tracker + Sidecar + Prometheus + Grafana Setup
+
+## 1. Build the Heap Tracker and Sidecar
+
+### Build interposition libraries and tools:
+```bash
+cd build
+rm ./* -rf
+../cmake_interposition.sh
+```
+
+### Remove previous data files, if any:
+```bash
+rm ./heap_tracker_observer_timeseries_file.output.txt    ./heap_tracker_observer_timeseries_graph_input.txt
+```
+
+This builds:
+- `libheap_tracker_observer_timeseries_file_interposition.so`  
+  (the pre-loadable shared object)
+
+---
+
+## 2. Run Target Programs with Heap Tracker (`LD_PRELOAD`)
+
+Use the provided helper script:
+```bash
+./libheap_tracker_observer_timeseries_file_interposition.so <your_binary>
+```
+
+## 3. Run the Heap Tracker Sidecar
+
+### 1. Create virtual environment:
+```bash
+python3 -m venv myenv
+```
+
+### 2. Activate the environment:
+```bash
+source myenv/bin/activate
+```
+
+### 3. Install Flask:
+```bash
+pip install flask
+```
+
+### 4. Run the Flask app:
+```bash
+python3 sidecar_process.py
+```
+
+The app will run at:  
+**http://127.0.0.1:9101/metrics**
+
+---
+
+## 4. Docker Compose Setup for Prometheus, Grafana, and Node Exporter
+
+### Create a `docker-compose.yml` file  
+(Include services for Prometheus, Grafana, and Node Exporter)
+
+### Create a `prometheus.yml` configuration file  
+(Configure scrape jobs including the Heap Tracker Sidecar endpoint)
+
+### Start the containers:
+```bash
+docker-compose up -d
+```
+
+### To stop the containers:
+```bash
+docker-compose down
+```
+
+### View running containers:
+```bash
+docker ps
+```
+
+---
+
+## 5. Grafana Dashboard
+
+1. Visit: [http://localhost:3000](http://localhost:3000)  
+2. Login with default credentials:  
+   - **Username:** `admin`  
+   - **Password:** `admin`
+3. Add a Prometheus data source pointing to:  
+   ```
+   http://host.docker.internal:9090
+   ```
+4. Import custom dashboards for:
+   - **Heap Tracker Sidecar**
+   - **Node Exporter**
 
 # Tests
 

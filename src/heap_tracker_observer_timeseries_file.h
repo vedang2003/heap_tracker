@@ -31,7 +31,7 @@ class HeapObserverTimeseriesFile final : public AbstractObserver {
   // Name of output file.
   char const * const filename_{nullptr};
   // Entries are buffered before flushed to the file.
-  enum { kMaxBufferCount = 128 * 1024 };
+  enum { kMaxBufferCount = 8 * 1024 };
   std::array<OfflineEntry, kMaxBufferCount> offline_entries_;
   // Current number of entries in 'offline_entries_'.
   size_t size_{0};
